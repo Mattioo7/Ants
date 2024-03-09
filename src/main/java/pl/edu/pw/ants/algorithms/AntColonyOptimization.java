@@ -3,9 +3,11 @@ package pl.edu.pw.ants.algorithms;
 import lombok.RequiredArgsConstructor;
 import pl.edu.pw.ants.models.Node;
 import pl.edu.pw.ants.models.Problem;
+import pl.edu.pw.ants.models.Solution;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -30,22 +32,22 @@ public class AntColonyOptimization implements CvrpAlgorithm {
         initializePheromones();
         calculateDistances();
 
-        List<List<Node>> bestSolution = null;
+        Solution bestSolution = null;
         double bestCost = Double.MAX_VALUE;
 
         for (int iter = 0; iter < iterations; iter++) {
-            List<List<Node>> solution = constructSolution();
+            List<Solution> solutions = constructSolutions();
 
-            double cost = calculateSolutionCost(solution);
-            if (cost < bestCost) {
-                bestCost = cost;
-                bestSolution = solution;
+            Solution bestSolutionInIteration = solutions.stream().min(Comparator.comparingDouble(Solution::getCost)).orElse(null);
+            if (bestSolutionInIteration.getCost() < bestCost) {
+                bestCost = bestSolutionInIteration.getCost();
+                bestSolution = bestSolutionInIteration;
             }
 
-            updatePheromones(solution, cost);
+            updatePheromones(solutions);
         }
 
-        return bestSolution;
+        return bestSolution.getRoutes(); // FIXME: Return best solution
     }
 
     private void initializePheromones() {
@@ -69,13 +71,14 @@ public class AntColonyOptimization implements CvrpAlgorithm {
         }
     }
 
-    private List<List<Node>> constructSolution() {
+    private List<Solution> constructSolutions() {
         // TODO: Maybe I can do it in parallel?
 
-        List<List<Node>> solutions = new ArrayList<>();
+        List<Solution> solutions = new ArrayList<>();
         for (int k = 0; k < antCount; k++) {
             List<Node> unvisited = new ArrayList<>(problem.getNodes());
             List<Node> route = new ArrayList<>();
+            List<List<Node>> routes = new ArrayList<>();
             Node depot = unvisited.stream().filter(node -> node.id() == problem.getDepotId()).findFirst().orElse(null);
             Node current = depot;
 
@@ -86,7 +89,7 @@ public class AntColonyOptimization implements CvrpAlgorithm {
                 Node next = selectNextNode(current, unvisited); // TODO: check capacity and range constraints
                 if (next == null) { // No next node found (probably due to capacity constraints)
                     route.add(depot); // Return to depot
-                    solutions.add(new ArrayList<>(route)); // Save this route
+                    routes.add(new ArrayList<>(route)); // Save this route
                     route.clear(); // Start new route
                     route.add(depot);
                     current = depot;
@@ -97,7 +100,8 @@ public class AntColonyOptimization implements CvrpAlgorithm {
                 current = next;
             }
             route.add(depot); // Return to depot for the last route
-            solutions.add(route);
+            routes.add(route);
+            solutions.add(new Solution(calculateRoutesCost(routes), routes));
         }
         return solutions;
     }
@@ -138,29 +142,30 @@ public class AntColonyOptimization implements CvrpAlgorithm {
         return unvisited.get(unvisited.size() - 1); // FIXME: Fallback to prevent null in case of rounding errors
     }
 
-    private void updatePheromones(List<List<Node>> solutions, double cost) {
+    private void updatePheromones(List<Solution> solutions) {
         for (double[] row : pheromones) {
             Arrays.fill(row, row[0] * (1 - evaporation));
         }
 
-        for (List<Node> route : solutions) {
-            double routeCost = calculateRouteCost(route);
-            double deposit = Q / routeCost;
-            for (int i = 0; i < route.size() - 1; i++) {
-                Node a = route.get(i);
-                Node b = route.get(i + 1);
-                pheromones[a.id()][b.id()] += deposit;
-                pheromones[b.id()][a.id()] += deposit;
+        for (Solution solution : solutions) {
+            double pheromoneDeposit = Q / solution.getCost(); // FIXME: Check if this is correct
+            for (List<Node> route : solution.getRoutes()) {
+                for (int i = 0; i < route.size() - 1; i++) {
+                    int from = route.get(i).id();
+                    int to = route.get(i + 1).id();
+                    pheromones[from][to] += pheromoneDeposit;
+                    pheromones[to][from] += pheromoneDeposit;
+                }
             }
         }
     }
 
-    private double calculateSolutionCost(List<List<Node>> solutions) {
-        double totalCost = 0;
-        for (List<Node> route : solutions) {
-            totalCost += calculateRouteCost(route);
+    private double calculateRoutesCost(List<List<Node>> routes) {
+        double cost = 0;
+        for (List<Node> route : routes) {
+            cost += calculateRouteCost(route);
         }
-        return totalCost;
+        return cost;
     }
 
     private double calculateRouteCost(List<Node> route) {
