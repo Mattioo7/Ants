@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class AntsApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AntsApplication.class, args);
+        System.exit(SpringApplication.exit(SpringApplication.run(AntsApplication.class, args)));
     }
 
 }
