@@ -72,13 +72,12 @@ public class AntColonyOptimization implements CvrpAlgorithm {
     }
 
     private List<Solution> constructSolutions() {
-        // TODO: Maybe I can do it in parallel?
-
         List<Solution> solutions = new ArrayList<>();
         for (int k = 0; k < antCount; k++) {
             List<Node> unvisited = new ArrayList<>(problem.getNodes());
             List<Node> route = new ArrayList<>();
             List<List<Node>> routes = new ArrayList<>();
+            double remainingCapacity = problem.getVehicleCapacity();
             Node depot = unvisited.stream().filter(node -> node.id() == problem.getDepotId()).findFirst().orElse(null);
             Node current = depot;
 
@@ -86,17 +85,19 @@ public class AntColonyOptimization implements CvrpAlgorithm {
             route.add(depot);
 
             while (!unvisited.isEmpty()) {
-                Node next = selectNextNode(current, unvisited); // TODO: check capacity and range constraints
-                if (next == null) { // No next node found (probably due to capacity constraints)
+                Node next = selectNextNodeBasedOnDemandAndCapacity(current, unvisited, remainingCapacity);
+                if (next == null) { // No next node found or capacity constraints reached
                     route.add(depot); // Return to depot
                     routes.add(new ArrayList<>(route)); // Save this route
                     route.clear(); // Start new route
                     route.add(depot);
+                    remainingCapacity = problem.getVehicleCapacity(); // Reset capacity for the new route
                     current = depot;
                     continue;
                 }
                 route.add(next);
                 unvisited.remove(next);
+                remainingCapacity -= problem.getDemands().get(next.id());
                 current = next;
             }
             route.add(depot); // Return to depot for the last route
@@ -106,18 +107,26 @@ public class AntColonyOptimization implements CvrpAlgorithm {
         return solutions;
     }
 
-    private Node selectNextNode(Node current, List<Node> unvisited) {
+    private Node selectNextNodeBasedOnDemandAndCapacity(Node current, List<Node> unvisited, double remainingCapacity) {
         double[] probabilities = new double[unvisited.size()];
         double probabilitySum = 0.0;
+        boolean isCandidateAvailable = false;
 
-        // Calculate probabilities for each unvisited node
+        // Calculate probabilities for each unvisited node, considering remaining capacity
         for (int i = 0; i < unvisited.size(); i++) {
             Node candidate = unvisited.get(i);
-            double pheromoneLevel = pheromones[current.id()][candidate.id()];
-            double visibility = 1.0 / distances[current.id()][candidate.id()];
-            probabilities[i] = Math.pow(pheromoneLevel, alpha) * Math.pow(visibility, beta);
-            probabilitySum += probabilities[i];
+            if (problem.getDemands().get(candidate.id()) <= remainingCapacity) {
+                isCandidateAvailable = true;
+                double pheromoneLevel = pheromones[current.id()][candidate.id()];
+                double visibility = 1.0 / distances[current.id()][candidate.id()];
+                probabilities[i] = Math.pow(pheromoneLevel, alpha) * Math.pow(visibility, beta);
+                probabilitySum += probabilities[i];
+            } else {
+                probabilities[i] = 0; // This candidate is not feasible due to capacity constraint
+            }
         }
+
+        if (!isCandidateAvailable) return null; // If no candidate is available due to capacity constraints
 
         // Normalize probabilities
         for (int i = 0; i < probabilities.length; i++) {

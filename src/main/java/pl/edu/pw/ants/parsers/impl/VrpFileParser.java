@@ -41,7 +41,7 @@ public class VrpFileParser implements Parser {
                     while (scanner.hasNextInt()) {
                         int id = scanner.nextInt();
                         int demand = scanner.nextInt();
-                        instance.getDemands().put(id, demand);
+                        instance.getDemands().put(id - 1, demand);
                     }
                 } else if (line.startsWith("DEPOT_SECTION")) {
                     instance.setDepotId(scanner.nextInt());

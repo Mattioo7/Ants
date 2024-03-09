@@ -32,7 +32,7 @@ public class AntsCommandLineRunner implements CommandLineRunner {
 //        routes = greedyAlgorithm.solve();
 //        greedyAlgorithm.printRoutes(routes);
 
-        CvrpAlgorithm antColonyOptimization = new AntColonyOptimization(problem, 10, 1.0, 2.0, 0.5, 10.0, 1.0, 1000);
+        CvrpAlgorithm antColonyOptimization = new AntColonyOptimization(problem, 10, 1.0, 2.0, 0.5, 10.0, 1.0, 5000);
         routes = antColonyOptimization.solve();
         antColonyOptimization.printRoutes(routes);
     }
