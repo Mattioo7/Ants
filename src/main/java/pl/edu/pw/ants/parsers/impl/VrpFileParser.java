@@ -35,7 +35,7 @@ public class VrpFileParser implements Parser {
                         int id = scanner.nextInt();
                         int x = scanner.nextInt();
                         int y = scanner.nextInt();
-                        instance.getNodes().add(new Node(id, x, y));
+                        instance.getNodes().add(new Node(id - 1, x, y)); // Subtract 1 from id to start from 0
                     }
                 } else if (line.startsWith("DEMAND_SECTION")) {
                     while (scanner.hasNextInt()) {
@@ -53,7 +53,6 @@ public class VrpFileParser implements Parser {
 
             scanner.close();
 //            instance.print(); // Print the parsed data for verification
-            System.out.println();
             return instance;
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
