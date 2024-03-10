@@ -5,36 +5,44 @@ import pl.edu.pw.ants.models.Node;
 import pl.edu.pw.ants.models.Problem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @RequiredArgsConstructor
 public class GreedyAlgorithm implements CvrpAlgorithm {
 
     private final Problem problem;
-    private final int vehicleRange; // Assuming this is the maximum distance a vehicle can travel
 
     public List<List<Node>> solve() {
         List<List<Node>> routes = new ArrayList<>();
         List<Node> unvisitedNodes = new ArrayList<>(problem.getNodes());
         Node depot = unvisitedNodes.stream().filter(node -> node.id() == problem.getDepotId()).findFirst().orElse(null);
         unvisitedNodes.remove(depot);
+        HashMap<Integer, Integer> demands = problem.getDemands();
+        double vehicleCapacity = problem.getVehicleCapacity();
 
         while (!unvisitedNodes.isEmpty()) {
             List<Node> route = new ArrayList<>();
             route.add(depot); // Start from the depot
             Node current = depot;
-            double rangeLeft = vehicleRange;
+            double rangeLeft = problem.getVehicleRange();
+            double capacityLeft = vehicleCapacity; // Reset capacity for each vehicle
 
-            while (!unvisitedNodes.isEmpty()) {
-                Node next = selectNextNode(current, unvisitedNodes, rangeLeft, depot);
+//            System.out.println("\nRange left: " + String.format("%.2f", rangeLeft) + " Capacity left: " + (capacityLeft < 10 ? " " : "") + capacityLeft);
+            while (!unvisitedNodes.isEmpty() && capacityLeft > 0) {
+                Node next = selectNextNode(current, unvisitedNodes, rangeLeft, depot, capacityLeft);
                 if (next == null) {
-                    // No reachable node that allows return to depot, break to start new route
+                    // No reachable node that allows return to depot or capacity exceeded, break to start new route
                     break;
                 }
+                double demand = demands.get(next.id());
                 route.add(next);
-                rangeLeft -= distance(current, next) + distance(next, depot); // Update range left considering return to depot
+                rangeLeft -= distance(current, next);
+                capacityLeft -= demand;
                 current = next;
                 unvisitedNodes.remove(next);
+
+//                System.out.println("Range left: " + String.format("%.2f", rangeLeft) + " Capacity left: " + (capacityLeft < 10 ? " " : "") + capacityLeft);
             }
 
             route.add(depot); // Return to depot
@@ -44,14 +52,16 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
         return routes;
     }
 
-    private Node selectNextNode(Node current, List<Node> unvisitedNodes, double rangeLeft, Node depot) {
+    private Node selectNextNode(Node current, List<Node> unvisitedNodes, double rangeLeft, Node depot, double capacityLeft) {
         Node next = null;
         double minDistance = Double.MAX_VALUE;
+        HashMap<Integer, Integer> demands = problem.getDemands();
 
         for (Node candidate : unvisitedNodes) {
             double toCandidate = distance(current, candidate);
             double returnToDepot = distance(candidate, depot);
-            if (toCandidate + returnToDepot <= rangeLeft && toCandidate < minDistance) {
+            double demand = demands.get(candidate.id());
+            if (toCandidate + returnToDepot <= rangeLeft && toCandidate < minDistance && demand <= capacityLeft) {
                 minDistance = toCandidate;
                 next = candidate;
             }
@@ -62,6 +72,14 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
 
     private double distance(Node a, Node b) {
         return Math.sqrt(Math.pow(a.x() - b.x(), 2) + Math.pow(a.y() - b.y(), 2));
+    }
+
+    private double calculateRouteCost(List<Node> route) {
+        double cost = 0.0;
+        for (int i = 0; i < route.size() - 1; i++) {
+            cost += distance(route.get(i), route.get(i + 1));
+        }
+        return cost;
     }
 
     @Override
@@ -83,14 +101,6 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
         }
 
         System.out.println("Cost " + (int)totalCost);
-    }
-
-    private double calculateRouteCost(List<Node> route) {
-        double cost = 0.0;
-        for (int i = 0; i < route.size() - 1; i++) {
-            cost += distance(route.get(i), route.get(i + 1));
-        }
-        return cost;
     }
 }
 

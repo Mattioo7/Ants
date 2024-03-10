@@ -47,7 +47,7 @@ public class VrpFileParser implements Parser {
                 }
             }
             instance.setNumberOfVehicles(30); // FIXME: Hardcoded for now
-            instance.setVehicleRange(1000); // FIXME: Hardcoded for now
+            instance.setVehicleRange(10000); // FIXME: Hardcoded for now
 
             scanner.close();
             return instance;

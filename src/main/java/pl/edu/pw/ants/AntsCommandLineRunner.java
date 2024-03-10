@@ -30,7 +30,7 @@ public class AntsCommandLineRunner implements CommandLineRunner {
         List<List<Node>> routes;
 
         System.out.println("\nRunning greedy algorithm");
-        CvrpAlgorithm greedyAlgorithm = new GreedyAlgorithm(problem, 1000);
+        CvrpAlgorithm greedyAlgorithm = new GreedyAlgorithm(problem);
         routes = greedyAlgorithm.solve();
         greedyAlgorithm.printRoutes(routes, skipDepot);
 
