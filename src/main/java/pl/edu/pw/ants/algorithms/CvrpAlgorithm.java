@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface CvrpAlgorithm {
     List<List<Node>> solve();
-    void printRoutes(List<List<Node>> routes);
+    void printRoutes(List<List<Node>> routes, boolean skipDepot);
 }

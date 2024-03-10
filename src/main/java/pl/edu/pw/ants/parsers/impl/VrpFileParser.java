@@ -25,9 +25,6 @@ public class VrpFileParser implements Parser {
                     instance.setName(line.split(":")[1].trim());
                 } else if (line.startsWith("COMMENT")) {
                     instance.setComment(line.substring(line.indexOf(":") + 1).trim());
-                } else if (line.startsWith("DIMENSION")) {
-                    // Example of how to handle other fields if needed
-                    // TODO: what is dimension?
                 } else if (line.startsWith("CAPACITY")) {
                     instance.setVehicleCapacity(Integer.parseInt(line.split(":")[1].trim()));
                 } else if (line.startsWith("NODE_COORD_SECTION")) {
@@ -44,15 +41,15 @@ public class VrpFileParser implements Parser {
                         instance.getDemands().put(id - 1, demand);
                     }
                 } else if (line.startsWith("DEPOT_SECTION")) {
-                    instance.setDepotId(scanner.nextInt());
+                    instance.setDepotId(scanner.nextInt() - 1);
                     // Assumes there's only one depot; break after reading it
                     break;
                 }
             }
             instance.setNumberOfVehicles(30); // FIXME: Hardcoded for now
+            instance.setVehicleRange(1000); // FIXME: Hardcoded for now
 
             scanner.close();
-//            instance.print(); // Print the parsed data for verification
             return instance;
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");

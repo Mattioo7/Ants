@@ -65,14 +65,18 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
     }
 
     @Override
-    public void printRoutes(List<List<Node>> routes) {
+    public void printRoutes(List<List<Node>> routes, boolean skipDepot) {
         int routeNumber = 1;
         double totalCost = 0.0;
 
         for (List<Node> route : routes) {
             System.out.print("Route #" + routeNumber++ + ": ");
-            for (int i = 1; i < route.size() - 1; i++) { // Start from 1 and end before last to skip depot
-                System.out.print(route.get(i).id() + (i < route.size() - 2 ? " " : ""));
+            for (int i = 0; i < route.size(); i++) {
+                // Check if depot should be skipped
+                if (skipDepot && (i == 0 || i == route.size() - 1)) {
+                    continue; // Skip printing the depot node if skipDepot is true
+                }
+                System.out.print(route.get(i).id() + (i < route.size() - 1 ? " " : ""));
             }
             System.out.println();
             totalCost += calculateRouteCost(route);

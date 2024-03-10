@@ -24,16 +24,23 @@ public class AntsCommandLineRunner implements CommandLineRunner {
     public void run(String... args) {
         log.info("Starting AntsCommandLineRunner");
         Problem problem = parser.parse();
-//        problem.print();
+        problem.print();
 
+        boolean skipDepot = false;
         List<List<Node>> routes;
 
-//        CvrpAlgorithm greedyAlgorithm = new GreedyAlgorithm(problem, 1000);
-//        routes = greedyAlgorithm.solve();
-//        greedyAlgorithm.printRoutes(routes);
+        System.out.println("\nRunning greedy algorithm");
+        CvrpAlgorithm greedyAlgorithm = new GreedyAlgorithm(problem, 1000);
+        routes = greedyAlgorithm.solve();
+        greedyAlgorithm.printRoutes(routes, skipDepot);
 
+        System.out.println("\nRunning ant colony optimization algorithm");
         CvrpAlgorithm antColonyOptimization = new AntColonyOptimization(problem, 10, 1.0, 2.0, 0.5, 10.0, 1.0, 5000);
         routes = antColonyOptimization.solve();
-        antColonyOptimization.printRoutes(routes);
+        if (routes == null) {
+            System.out.println("No solution found");
+            return;
+        }
+        antColonyOptimization.printRoutes(routes, skipDepot);
     }
 }
