@@ -13,7 +13,7 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
 
     private final Problem problem;
 
-    public List<List<Node>> solve() {
+    public List<List<Node>> solve(boolean printIteration, boolean printRoutes) {
         List<List<Node>> routes = new ArrayList<>();
         List<Node> unvisitedNodes = new ArrayList<>(problem.getNodes());
         Node depot = unvisitedNodes.stream().filter(node -> node.id() == problem.getDepotId()).findFirst().orElse(null);

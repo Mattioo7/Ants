@@ -28,7 +28,7 @@ public class AntColonyOptimization implements CvrpAlgorithm {
     private double[][] distances;
 
     @Override
-    public List<List<Node>> solve() {
+    public List<List<Node>> solve(boolean printIteration, boolean printRoutes) {
         initializePheromones();
         calculateDistances();
 
@@ -47,6 +47,13 @@ public class AntColonyOptimization implements CvrpAlgorithm {
             if (bestSolutionInIteration.getCost() < bestCost) {
                 bestCost = bestSolutionInIteration.getCost();
                 bestSolution = bestSolutionInIteration;
+
+                if (printIteration) {
+                    System.out.println("Iteration " + iter + " Best cost: " + bestCost);
+                }
+                if (printRoutes) {
+                    bestSolution.printRoutes(false);
+                }
             }
 
             updatePheromones(solutions);
@@ -187,13 +194,13 @@ public class AntColonyOptimization implements CvrpAlgorithm {
         }
 
         for (Solution solution : solutions) {
-            double pheromoneDeposit = Q / solution.getCost(); // FIXME: Check if this is correct
+            double pheromoneDeposit = Q / solution.getCost();
             for (List<Node> route : solution.getRoutes()) {
                 for (int i = 0; i < route.size() - 1; i++) {
                     int from = route.get(i).id();
                     int to = route.get(i + 1).id();
                     pheromones[from][to] += pheromoneDeposit;
-                    pheromones[to][from] += pheromoneDeposit;
+//                    pheromones[to][from] += pheromoneDeposit;
                 }
             }
         }
@@ -224,9 +231,8 @@ public class AntColonyOptimization implements CvrpAlgorithm {
         for (List<Node> route : routes) {
             System.out.print("Route #" + routeNumber++ + ": ");
             for (int i = 0; i < route.size(); i++) {
-                // Check if depot should be skipped
                 if (skipDepot && (i == 0 || i == route.size() - 1)) {
-                    continue; // Skip printing the depot node if skipDepot is true
+                    continue;
                 }
                 System.out.print(route.get(i).id() + (i < route.size() - 1 ? " " : ""));
             }

@@ -29,9 +29,14 @@ public class AntsCommandLineRunner implements CommandLineRunner {
     public void run(String... args) {
         log.info("Starting AntsCommandLineRunner");
 
+        boolean printProblem;
+        boolean printIteration;
+        boolean printRoutes;
 
         Options options = new Options();
         options.addOption("p", "printProblem", false, "Print the problem details");
+        options.addOption("i", "printIteration", false, "Print iterations with best cost");
+        options.addOption("r", "printRoutes", false, "Print routes for iterations");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = null;
@@ -42,10 +47,13 @@ public class AntsCommandLineRunner implements CommandLineRunner {
             System.err.println("Error parsing command line arguments: " + e.getMessage());
             System.exit(1);
         }
+        printProblem = cmd.hasOption("printProblem");
+        printIteration = cmd.hasOption("printIteration");
+        printRoutes = cmd.hasOption("printRoutes");
 
         Problem problem = problemParser.parse();
 
-        if (cmd.hasOption("printProblem")) {
+        if (printProblem) {
             problem.print();
         }
 
@@ -55,14 +63,14 @@ public class AntsCommandLineRunner implements CommandLineRunner {
         for (int i = 0; i < 1; i++) {
             System.out.println("\nRunning greedy algorithm");
             CvrpAlgorithm greedyAlgorithm = new GreedyAlgorithm(problem);
-            routes = greedyAlgorithm.solve();
+            routes = greedyAlgorithm.solve(printIteration, printRoutes);
             greedyAlgorithm.printRoutes(routes, skipDepot);
         }
 
         for (int i = 0; i < 1; i++) {
             System.out.println("\nRunning ant colony optimization algorithm");
             CvrpAlgorithm antColonyOptimization = new AntColonyOptimization(problem, 10, 1.0, 2.0, 0.5, 10.0, 1.0, 5000);
-            routes = antColonyOptimization.solve();
+            routes = antColonyOptimization.solve(printIteration, printRoutes);
             if (routes == null) {
                 System.out.println("No solution found");
                 return;
