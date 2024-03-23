@@ -13,9 +13,9 @@ import java.util.Scanner;
 public class VrpFileParser implements Parser {
 
     @Override
-    public Problem parse() {
+    public Problem parse(String filePath) {
         try {
-            File file = new File("src/main/resources/vrp-data/A-n32-k5.vrp");
+            File file = new File(filePath);
             Scanner scanner = new Scanner(file);
             Problem instance = new Problem();
 

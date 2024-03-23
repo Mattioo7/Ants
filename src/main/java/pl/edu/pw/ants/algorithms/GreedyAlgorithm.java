@@ -30,7 +30,8 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
 
 //            System.out.println("\nRange left: " + String.format("%.2f", rangeLeft) + " Capacity left: " + (capacityLeft < 10 ? " " : "") + capacityLeft);
             while (!unvisitedNodes.isEmpty() && capacityLeft > 0) {
-                Node next = selectNextNode(current, unvisitedNodes, rangeLeft, depot, capacityLeft);
+//                Node next = selectNextNode(current, unvisitedNodes, rangeLeft, depot, capacityLeft);
+                Node next = selectNearestNode(current, unvisitedNodes, rangeLeft, depot, capacityLeft);
                 if (next == null) {
                     // No reachable node that allows return to depot or capacity exceeded, break to start new route
                     break;
@@ -52,6 +53,7 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
         return routes;
     }
 
+    // Selects the next node to visit that meets the capacity constraints
     private Node selectNextNode(Node current, List<Node> unvisitedNodes, double rangeLeft, Node depot, double capacityLeft) {
         Node next = null;
         double minDistance = Double.MAX_VALUE;
@@ -65,6 +67,33 @@ public class GreedyAlgorithm implements CvrpAlgorithm {
                 minDistance = toCandidate;
                 next = candidate;
             }
+        }
+
+        return next;
+    }
+
+    // Select the nearest node to visit, null if nearest node exceeds capacity
+    private Node selectNearestNode(Node current, List<Node> unvisitedNodes, double rangeLeft, Node depot, double capacityLeft) {
+        Node next = null;
+        double minDistance = Double.MAX_VALUE;
+        HashMap<Integer, Integer> demands = problem.getDemands();
+
+        for (Node candidate : unvisitedNodes) {
+            double toCandidate = distance(current, candidate);
+            double returnToDepot = distance(candidate, depot);
+            if (toCandidate + returnToDepot <= rangeLeft && toCandidate < minDistance) {
+                minDistance = toCandidate;
+                next = candidate;
+            }
+        }
+
+        if (next == null) {
+            throw new RuntimeException();
+        }
+
+        double demand = demands.get(next.id());
+        if (demand > capacityLeft) {
+            return null;
         }
 
         return next;

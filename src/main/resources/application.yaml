@@ -5,3 +5,12 @@ logging:
 spring:
   main:
     banner-mode: off
+
+app:
+  use-command-line-parameters: false
+  print-problem: false
+  print-iterations: false
+  print-routes: true
+  file-path: "/home/matti/IdeaProjects/Ants/src/main/resources/vrp-data/A-n32-k5.vrp"
+  number-of-elite-ants: 10
+  reinforcement-on-elite-ants: 10

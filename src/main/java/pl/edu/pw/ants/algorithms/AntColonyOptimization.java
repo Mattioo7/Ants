@@ -22,6 +22,8 @@ public class AntColonyOptimization implements CvrpAlgorithm {
     private final double Q; // Pheromone deposit factor
     private final double pheromoneInitial;
     private final int iterations;
+    private final int numberOfEliteAnts;
+    private final int reinforcementOnEliteAnts;
     private final Random random = new Random();
 
     private double[][] pheromones;
@@ -115,8 +117,7 @@ public class AntColonyOptimization implements CvrpAlgorithm {
                     current = depot;
 
                     Node canReachAnyOfRemainingNodes = selectNextNodeBasedOnDemandAndCapacity(current, unvisited, remainingCapacity, remainingRange);
-                    if (canReachAnyOfRemainingNodes != null) {
-                    } else {
+                    if (canReachAnyOfRemainingNodes == null) {
                         isSolutionFeasible = false;
                         break; // No more nodes can be visited
                     }
@@ -167,7 +168,7 @@ public class AntColonyOptimization implements CvrpAlgorithm {
 
         // Normalize probabilities
         for (int i = 0; i < probabilities.length; i++) {
-            probabilities[i] /= probabilitySum;
+            probabilities[i] /= probabilitySum; // FIXME: don't divide by 0 when all candidates have 0 pheromone and therefore 0 probability
         }
 
         // Select next node based on calculated probabilities
@@ -189,10 +190,12 @@ public class AntColonyOptimization implements CvrpAlgorithm {
     }
 
     private void updatePheromones(List<Solution> solutions) {
+        // Evaporate pheromones
         for (double[] row : pheromones) {
             Arrays.fill(row, row[0] * (1 - evaporation));
         }
 
+        // Update pheromones based on all ants
         for (Solution solution : solutions) {
             double pheromoneDeposit = Q / solution.getCost();
             for (List<Node> route : solution.getRoutes()) {
@@ -200,7 +203,23 @@ public class AntColonyOptimization implements CvrpAlgorithm {
                     int from = route.get(i).id();
                     int to = route.get(i + 1).id();
                     pheromones[from][to] += pheromoneDeposit;
-//                    pheromones[to][from] += pheromoneDeposit;
+                }
+            }
+        }
+
+        if (numberOfEliteAnts <= 0) {
+            return;
+        }
+
+        // Apply elitist strategy
+        solutions.sort(Comparator.comparingDouble(Solution::getCost));
+        for (int i = 0; i < Math.min(numberOfEliteAnts, solutions.size()); i++) {
+            Solution eliteSolution = solutions.get(i);
+            for (List<Node> route : eliteSolution.getRoutes()) {
+                for (int j = 0; j < route.size() - 1; j++) {
+                    int from = route.get(j).id();
+                    int to = route.get(j + 1).id();
+                    pheromones[from][to] += reinforcementOnEliteAnts;
                 }
             }
         }
